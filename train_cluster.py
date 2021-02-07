@@ -1,3 +1,9 @@
+"""
+Using tslearn to cluster sequential data.
+@author: 
+@date: 2021-02-01 
+"""
+
 import os
 import csv
 import random
@@ -24,11 +30,19 @@ from tslearn.preprocessing import TimeSeriesResampler as Resampler
 import tensorflow as tf
 
 
-def read_data(file_data, sz):
-    f = open(file_data, "r")
-    lines = list(csv.reader(f))
-    lines.pop(0)
-    f.close()
+
+def read_data(src_file, sz):
+    """
+    process data.
+    Input:
+        src_file: path to source file
+        sz: 
+    return: None
+    """
+    with open(src_file, "r") as fr:
+        lines = list(csv.reader(fr))
+        lines.pop(0)
+
     col_value = []
     col_file_id = []
     for row in lines:
@@ -53,7 +67,6 @@ def read_data(file_data, sz):
         data[key] = X
     data_temp = list(data.items())
     data = dict(sorted(data_temp, key=lambda x: x[0]))
-    
     return data
 
 
@@ -174,71 +187,7 @@ def evaluate(dir_results, labels):
             f.write("NMI: %f\n" %nmi)
 
 
-def classify(data, labels, seed):
-    n_ts = len(data)
-    sz = random.choice(list(data.values())).shape[1]
-    n_classes = len(set(labels))
-    data_index = np.zeros((n_ts, 1))
-    data_value = np.zeros((n_ts, sz, 1))
-    for i, (key, value) in enumerate(data.items()):
-        data_index[i, :] = key
-        data_value[i, :, :] = value
-    X_train, X_test, y_train, y_test = train_test_split(data_value, labels, test_size=0.4, 
-                                                        random_state=seed, stratify=labels)
-    shapelet_sizes = shapelet_size_dict(n_ts=n_ts, ts_sz=sz, n_classes=n_classes, l=0.1, r=2)
-    shapelet_clf = LearningShapelets(n_shapelets_per_size=shapelet_sizes,
-                                    optimizer=tf.optimizers.Adam(0.001),
-                                    batch_size=32,
-                                    max_iter=1000,
-                                    random_state=seed,
-                                    verbose=0)
-    shapelet_clf.fit(X_train, y_train)
-    pred = shapelet_clf.predict(X_test)
-    cm = confusion_matrix(y_test, pred, labels=[(i+1) for i in range(n_classes)])
 
-    with open("shapelets_report.txt", "w") as f:
-        f.write(classification_report(y_test, pred, digits=6))
-    with open("shapelets_pred.txt", "w") as f:
-        all_pred = shapelet_clf.predict(data_value)
-        f.write("file_id, true label, pred label\n")
-        for out1, out2, out3 in zip(data_index, labels, all_pred):
-            f.write("%d, %d, %d\n" %(out1, out2, out3))
-    
-    plt.figure()
-    plt.matshow(cm, cmap=plt.cm.Greens)
-    plt.colorbar()
-    for x in range(len(cm)):
-        for y in range(len(cm)):
-            plt.annotate(cm[x, y], xy=(x, y), horizontalalignment="center", verticalalignment="center")
-    plt.xticks([i for i in range(n_classes)], [(i+1) for i in range(n_classes)])
-    plt.yticks([i for i in range(n_classes)], [(i+1) for i in range(n_classes)])
-    plt.xlabel("Predicted Label")
-    plt.ylabel("True Label")
-    plt.title("Shapelets Confusion Matrix", y=1.1)
-    plt.savefig("shapelets CM.png", format="png")
-    plt.cla()
-    plt.clf()
-    
-    plt.figure()
-    for i, sz in enumerate(shapelet_sizes.keys()):
-        plt.subplot(len(shapelet_sizes), 1, i + 1)
-        plt.title("%d shapelets of size %d" %(shapelet_sizes[sz], sz))
-        for shape in shapelet_clf.shapelets_:
-            if ts_size(shape) == sz:
-                plt.plot(shape.ravel())
-                plt.xlim(0, sz-1)
-    plt.tight_layout()
-    plt.savefig("shapelets.png", format="png")
-    plt.cla()
-    plt.clf()
-
-    plt.figure()
-    plt.plot(np.arange(1, shapelet_clf.n_iter_+1), shapelet_clf.history_["loss"], color="navy")
-    plt.title("Training Loss")
-    plt.xlabel("Epoch")
-    plt.savefig("loss.png", format="png")
-    plt.cla()
-    plt.clf()
 
 
 def main():
@@ -254,11 +203,8 @@ def main():
     labels = read_labels(file_labels)
     # choose method from "ed", "dtw", "softdtw", "kernel", "kshape"
     method = "kshape"
-    '''
     clustering(data, method, n_clusters, seed)
     evaluate(dir_results, labels)
-    '''
-    classify(data, labels, seed)
 
 
 if __name__ == "__main__":
