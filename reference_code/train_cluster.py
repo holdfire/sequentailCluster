@@ -22,12 +22,8 @@ from tslearn.utils import ts_size
 from tslearn.clustering import TimeSeriesKMeans as KMeans
 from tslearn.clustering import KernelKMeans
 from tslearn.clustering import KShape
-from tslearn.shapelets import LearningShapelets
-from tslearn.shapelets import grabocka_params_to_shapelet_size_dict as shapelet_size_dict
 from tslearn.preprocessing import TimeSeriesScalerMeanVariance as Scaler
 from tslearn.preprocessing import TimeSeriesResampler as Resampler
-
-import tensorflow as tf
 
 
 
@@ -67,6 +63,8 @@ def read_data(src_file, sz):
         data[key] = X
     data_temp = list(data.items())
     data = dict(sorted(data_temp, key=lambda x: x[0]))
+    print(data.keys())
+    exit(0)
     return data
 
 
@@ -195,7 +193,7 @@ def main():
     seed = 0
     n_clusters = 9
     size = 400
-    file_data = "data.csv"
+    file_data = "./data/data.csv"
     file_labels = "labels.xlsx"
     dir_results = "clustering_all_file"
 

@@ -1,0 +1,3 @@
+Euclidean K-means
+ARI: 0.000591
+NMI: 0.004940
