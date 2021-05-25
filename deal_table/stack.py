@@ -5,7 +5,7 @@ import numpy as np
 
 def stack_table(src_file, dst_file, skip_rows, skip_columns):
     """
-    删除[min_value, max_value]之间的值
+    把src_file文件中表格的数值堆积成一列
     src_file: 原始输入文件，要求是一个.csv文件
     dst_file: 输出文件
     skip_rows: 跳过的行数，即不处理前几行
